@@ -1,12 +1,15 @@
 import express from 'express';
 import mongoose from 'mongoose';
+import multer from 'multer';
 
-import {registerValidation, loginValidation} from './validations.js';
-import checkAuth from './utils/checkAuth.js';
+
+import {registerValidation, loginValidation, postCreateValidation} from './validations.js';
+import checkAuth from './utils/checkAuth.js'; 
 
 
 import {login, register, getMe} from './controllers/UserController.js'
-import {create} from './controllers/PostController.js'
+import {create, getAll, getOne, remove, update} from './controllers/PostController.js'
+import handleValidationErrors from './utils/handleValidationErrors.js';
 
 
 mongoose
@@ -16,23 +19,39 @@ mongoose
 
 const app = express();
 
+// save images
+const storage = multer.diskStorage({
+    destination: (_, __, cb) => {
+        cb(null, 'uploads');
+    },
+    filename: (_, file, cb) => {
+        cb(null, file.originalname);
+    },
+});
+
+const upload = multer( { storage })
+
 app.use(express.json());
+app.use('/uploads', express.static('uploads'))
 
 app.get('/', (req, res) =>{
     res.send('Hello world dasd');
 });
 
-app.post('/login', loginValidation, login )
-
-app.post('/register', registerValidation, register )
-
+app.post('/login', loginValidation, handleValidationErrors, login )
+app.post('/register', registerValidation, handleValidationErrors, register )
 app.get('/me', checkAuth, getMe)
-
-// app.get('/posts', getAll )
-// app.get('/posts/:id', getOne )
-// app.delete('/posts', remove )
-app.post('/posts', create )
-// app.patch('/posts', update )
+app.post('/upload', checkAuth, upload.single('image'), (req, res) => {
+    res.json({
+        url: `/uploads/${req.file.originalname}`,
+        message: 'Изображение загрузилось'
+    })
+})
+app.get('/posts', getAll )
+app.get('/posts/:id', getOne )
+app.delete('/posts/:id', remove )
+app.post('/posts',checkAuth, postCreateValidation, handleValidationErrors, create )
+app.patch('/posts/:id',checkAuth,postCreateValidation, handleValidationErrors, update )
 
 
 

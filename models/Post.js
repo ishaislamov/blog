@@ -23,9 +23,13 @@ const PostSchema = new mongoose.Schema({
         ref: 'User',
         reqiered: true,
     },
+
     imageUrl: String,
-}, {
-    timeStamps: true,
-}); 
+},
+{
+    timestamps: true,
+},
+); 
+
 
 export default mongoose.model('Post', PostSchema)

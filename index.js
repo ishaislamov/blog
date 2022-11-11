@@ -1,20 +1,21 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import multer from 'multer';
+import cors from 'cors';
 
 
 import {registerValidation, loginValidation, postCreateValidation} from './validations.js';
-
 import checkAuth from './utils/checkAuth.js'; 
 
 
 import {login, register, getMe} from './controllers/UserController.js'
-import {create, getAll, getOne, remove, update} from './controllers/PostController.js'
+import {create, getAll, getOne, remove, update, getLastTags} from './controllers/PostController.js'
 import handleValidationErrors from './utils/handleValidationErrors.js';
 
+// mongodb+srv://admin:admin@cluster0.g2nvhg0.mongodb.net/blog?retryWrites=true&w=majority
 
 mongoose
-.connect('mongodb+srv://admin:admin@cluster0.g2nvhg0.mongodb.net/blog?retryWrites=true&w=majority',)
+.connect(process.env.MONGODB_URI)
 .then(() => {console.log('DB ok')})
 .catch((error) => {console.log('DB error', error)})
 
@@ -33,6 +34,7 @@ const storage = multer.diskStorage({
 const upload = multer( { storage })
 
 app.use(express.json());
+app.use(cors())
 app.use('/uploads', express.static('uploads'))
 
 app.get('/', (req, res) =>{
@@ -49,6 +51,7 @@ app.post('/upload', checkAuth, upload.single('image'), (req, res) => {
     })
 })
 app.get('/posts', getAll )
+app.get('/tags', getLastTags )
 app.get('/posts/:id', getOne )
 app.delete('/posts/:id', remove )
 app.post('/posts',checkAuth, postCreateValidation, handleValidationErrors, create )
